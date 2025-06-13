@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Contato</title>
+    <style>
+        /* Estilos básicos para o formulário - você pode personalizar! */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: calc(100% - 20px); /* 100% menos o padding */
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box; /* Inclui padding e borda na largura */
+        }
+        textarea {
+            resize: vertical; /* Permite redimensionar verticalmente */
+            min-height: 100px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        input[type="submit"]:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #messageDiv {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Entre em Contato</h1>
+        <form>
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" required>
+
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="mensagem">Mensagem:</label>
+            <textarea id="mensagem" name="mensagem" required></textarea>
+
+            <input type="submit" value="Enviar Mensagem">
+        </form>
+        <div id="messageDiv"></div> 
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form'); // Seleciona o seu formulário
+            const submitButton = form.querySelector('input[type="submit"]'); // Seleciona o botão de submit
+            const messageDiv = document.getElementById('messageDiv'); // Seleciona o div para mensagens
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Impede o envio padrão do formulário
+
+                submitButton.disabled = true; // Desabilita o botão para evitar múltiplos cliques
+                submitButton.value = 'Enviando...'; // Altera o texto do botão
+                messageDiv.textContent = ''; // Limpa mensagens anteriores
+                messageDiv.style.color = 'black'; // Reseta a cor da mensagem
+
+                // Pega os dados do formulário
+                const formData = new FormData(form);
+
+                // Converte FormData para um objeto URLSearchParams (formato esperado pelo Apps Script)
+                const params = new URLSearchParams();
+                for (const [key, value] of formData.entries()) {
+                    params.append(key, value);
+                }
+
+                // URL do seu Google Apps Script (ATENÇÃO: SUBSTITUA ESTE URL!)
+                const appsScriptUrl = 'https://script.google.com/macros/s/AKfycbyRvt5LlPQ0XI4CMxseHftjZBGsU3FKyASSVnW8fqYVdkyhFYkJWiXAvKJAO5DwKjYFHQ/exec'; 
+
+                fetch(appsScriptUrl, {
+                    method: 'POST',
+                    body: params // Envia os dados como URL-encoded
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Se a resposta não for 2xx (ex: 404, 500)
+                        return response.text().then(text => { throw new Error(text) });
+                    }
+                    return response.text(); // Ou response.json() se o Apps Script retornar JSON
+                })
+                .then(data => {
+                    console.log('Sucesso:', data);
+                    messageDiv.textContent = 'Mensagem enviada com sucesso!';
+                    messageDiv.style.color = 'green';
+                    form.reset(); // Limpa o formulário após o envio
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    messageDiv.textContent = 'Ocorreu um erro ao enviar a mensagem. Tente novamente mais tarde.';
+                    messageDiv.style.color = 'red';
+                })
+                .finally(() => {
+                    submitButton.disabled = false; // Reabilita o botão
+                    submitButton.value = 'Enviar Mensagem'; // Volta o texto original do botão
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

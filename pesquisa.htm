@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisar Dados da Planilha</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #searchContainer {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        #searchInput {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #searchButton {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        #searchButton:hover {
+            background-color: #0056b3;
+        }
+        #loadingMessage {
+            display: none; /* Escondido por padrão */
+            margin-top: 10px;
+            font-style: italic;
+            color: #555;
+        }
+        #results {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .result-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .result-item strong {
+            color: #333;
+        }
+        .no-results {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Pesquisar na Planilha</h1>
+
+        <div id="searchContainer">
+            <input type="text" id="searchInput" placeholder="Digite seu termo de busca...">
+            <button id="searchButton">Pesquisar</button>
+        </div>
+        <div id="loadingMessage">Carregando dados...</div>
+        <div id="results">
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const resultsDiv = document.getElementById('results');
+            const loadingMessage = document.getElementById('loadingMessage');
+
+            // --- ATENÇÃO: SUBSTITUA ESTE URL! ---
+            // Cole aqui o URL do seu Google Apps Script implantado para PESQUISA (doGet)
+            const appsScriptSearchUrl = 'https://script.google.com/macros/s/AKfycby86Pui9Rms2NHfmk8fPlGPNf7p9bOwmq2TYeyxQKCQGAikfLHzK-J3sr8ivFTP5vM-SA/exec'; 
+
+            async function fetchData(query = '') {
+                loadingMessage.style.display = 'block'; // Mostra mensagem de carregamento
+                resultsDiv.innerHTML = ''; // Limpa resultados anteriores
+
+                let url = appsScriptSearchUrl;
+                if (query) {
+                    url += `?query=${encodeURIComponent(query)}`; // Adiciona o termo de busca na URL
+                }
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Erro na requisição: ${response.statusText}`);
+                    }
+                    const data = await response.json(); // Pega a resposta como JSON
+
+                    displayResults(data); // Chama a função para exibir os resultados
+
+                } catch (error) {
+                    console.error('Erro ao buscar dados:', error);
+                    resultsDiv.innerHTML = '<p style="color: red;">Erro ao carregar dados. Verifique o console para mais detalhes.</p>';
+                } finally {
+                    loadingMessage.style.display = 'none'; // Esconde mensagem de carregamento
+                }
+            }
+
+            function displayResults(data) {
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<p class="no-results">Nenhum resultado encontrado.</p>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'result-item';
+
+                    // Itera sobre as chaves/valores de cada item (coluna/dado)
+                    for (const key in item) {
+                        if (item.hasOwnProperty(key)) {
+                            const p = document.createElement('p');
+                            // Exemplo: "Nome: João Silva"
+                            p.innerHTML = `<strong>${key}:</strong> ${item[key]}`; 
+                            itemDiv.appendChild(p);
+                        }
+                    }
+                    resultsDiv.appendChild(itemDiv);
+                });
+            }
+
+            // Event Listener para o botão de pesquisa
+            searchButton.addEventListener('click', function() {
+                const query = searchInput.value.trim(); // Pega o valor do input e remove espaços extras
+                fetchData(query); // Chama a função para buscar os dados
+            });
+
+            // Opcional: Pesquisar ao pressionar "Enter" no campo de busca
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchButton.click(); // Simula o clique no botão
+                }
+            });
+
+            // Carrega todos os dados ao carregar a página (sem termo de busca inicial)
+            fetchData(); 
+        });
+    </script>
+
+</body>
+</html>
